@@ -22,7 +22,49 @@ drawCone(radius, height, resolution)
 
 Most accept Vec3/Vec2 overloads too.
 
-**Note:** `drawLine()` is always 1px. `setLineWidth()` does NOT exist in sokol. For thick lines, use StrokeMesh.
+**Note:** `drawLine()` is always 1px. `setLineWidth()` does NOT exist in sokol. For thick lines, build a `Path` and call `path.drawStroke()` (uses StrokeMesh internally), or assemble StrokeMesh directly.
+
+---
+
+## Curves & Bézier  *(v0.5.2+)*
+
+Strokes only — open curves can't be filled. Segment count comes from the
+current `CurveStyle` (see **Curve Quality** under Style below).
+
+```cpp
+// Bézier (cubic / quadratic / N-th order via de Casteljau).
+drawBezier(p0, p1, p2, p3)
+drawBezier(p0, p1, p2)
+drawBezier(vector<Vec3>& ctrlPoints)
+
+// Catmull-Rom interpolating spline. drawCurve(p0,p1,p2,p3) emits the
+// segment p1→p2 with p0/p3 as tangent influences (oF semantics).
+drawCurve(p0, p1, p2, p3)
+drawCurve(vector<Vec3>& pts)              // chained segments
+drawCurve(vector<Vec3>& pts, bool closed) // wraps last↔first when closed
+
+// Arc — radians, counter-clockwise convention.
+drawArc(x, y, radius, angleBegin, angleEnd)
+drawArc(Vec3 center, radius, angleBegin, angleEnd)
+```
+
+For chainable paths use `Path` (also tolerance-aware):
+
+```cpp
+Path p;
+p.moveTo(0, 0);
+p.lineTo(100, 0);
+p.bezierTo(120, 0, 140, 20, 140, 40);          // cubic
+p.quadBezierTo(150, 80, 100, 100);             // quadratic
+p.curveTo(50, 120);                            // Catmull-Rom (needs ≥4 pts)
+p.arc(Vec2(100, 100), 30, 0, HALF_TAU);        // arc segment
+p.close();
+p.draw();                                      // fill or stroke per current style
+p.drawStroke();                                // thick stroke via StrokeMesh
+```
+
+Pass `resolution = -1` (default) on `Path` curve methods to honour the
+current `CurveStyle`; pass a positive int to force a fixed segment count.
 
 ---
 
@@ -37,7 +79,7 @@ setColor(Color c)
 getColor() -> Color
 
 // Other color spaces
-setColorHSB(h, s, b, a)           // H: 0–TAU
+setColorHSB(h, s, b, a)           // H: 0–1
 setColorOKLab(L, a, b, alpha)
 setColorOKLCH(L, C, H, alpha)
 ```
@@ -69,10 +111,20 @@ popStyle()                         // Restore
 resetStyle()
 ```
 
-### Circle Resolution
+### Curve Quality
+
+One knob controls segment count for **circle, ellipse, roundedRect,
+squircle, arc, bezier, curve, and `Path` curves** — all routed through
+`decideCircleSegments` / `decideArcSegments`.
 
 ```cpp
-setCircleResolution(int)           // Default: 20
+setCurveTolerance(0.5f);          // adaptive (default): target pixel error.
+                                  // accounts for scale()/zoom, so curves
+                                  // stay smooth when transformed.
+setCurveResolution(24);           // fixed segment count regardless of zoom.
+
+setCircleResolution(20);          // deprecated alias — forwards to
+                                  // setCurveResolution with a warning.
 ```
 
 ---
@@ -84,7 +136,7 @@ Color(r, g, b, a = 1.0)
 Color(gray, a = 1.0)
 Color::fromBytes(r, g, b, a = 255)    // 0–255 range
 Color::fromHex(0xRRGGBB)
-Color::fromHSB(h, s, b, a)            // H: 0–TAU
+Color::fromHSB(h, s, b, a)            // H: 0–1
 Color::fromOKLCH(L, C, H, a)
 Color::fromOKLab(L, a, b, alpha)
 

@@ -78,6 +78,44 @@ Ambiguous bare names (e.g. a bundled `tcxLua` colliding with a community `funats
 
 **addon.json fields** (all optional, but encourage authors to fill in): `description`, `author`, `license`, `category`, `keywords`, `platforms`, `screenshot`, `demo_url`, `trussc_version`, `dependencies`. Categories come from a fixed set (`3d`, `ai`, `algorithms`, `animation`, `bridges`, `computer-vision`, `game`, `graphics`, `gui`, `hardware`, `machine-learning`, `network`, `physics`, `sound`, `typography`, `utilities`, `video`, `web`, `misc`). Dependencies declare other addons with optional tag/branch/commit pinning — `trusscli addon clone` walks the graph recursively with y/n prompts.
 
+**Authoring (publishing your own):**
+TrussC wants more addons — encourage authoring without ceremony. Listing in the registry is **automatic** (no PR). Crawler conditions:
+
+1. Repo name matches `^tcx[A-Z]` (e.g. `tcxMyAddon`)
+2. GitHub topic `trussc-addon` is set; repo public, not archived
+3. `addon.json` at repo root
+
+Minimal layout (matches bundled addons like `tcxBox2d`):
+
+```
+tcxMyAddon/
+├── src/                # Addon code; .h + .cpp together
+│   └── tcxMyAddon.h    # Umbrella header — users `#include "tcxMyAddon.h"`
+├── example-basic/      # Optional sample (addons.make + shared CMakeLists.txt)
+├── addon.json          # Registry metadata
+└── CMakeLists.txt      # Only when FetchContent / vendored libs need a build
+```
+
+Pure header/source addons need no CMakeLists.txt — the parent app picks up `src/` automatically. Public symbols live under `tcx::` (alias of `trussc::ext`). Full authoring guide: `docs/ADDONS.md` in the TrussC repo.
+
+**Build as you go** (no ceremony, do these while authoring — they're part of writing the addon, not a publication checklist):
+- `addon.json` filled: `description`, `author`, `license`, `category` (fixed list), `keywords`, `screenshot` if visual. `{}` is technically enough but won't be discoverable.
+- A LICENSE file. Without it, others legally can't use the addon.
+- A README — even a few lines: what it does, how to include it, one snippet.
+- Run it on the **current** TrussC release. **Don't set `trussc_version`** unless the addon truly can't run on the latest — leaving the field out means "works on the latest", which is the intended default. Treat `trussc_version` as a niche escape hatch, not standard practice.
+- `platforms` lists only platforms you actually tested.
+
+**Before suggesting the `trussc-addon` topic — light readiness check, NOT a gate.**
+
+Adding the topic surfaces the addon in `trusscli addon list --remote`, tab completion, and trussc.org/addons — a public commitment. So before recommending the user add it, confirm intent and basic readiness. **Don't block enthusiasm**: combine the items below into **at most 3–5 questions in one round**, and skip anything already obviously resolved from the conversation. The point is "did you think about this?", not paperwork. Default disposition: encourage publishing.
+
+- **Intent:** general-purpose for others, or project-specific glue? Glue can stay a public repo *without* the topic — that's a fine outcome, no shame in it.
+- **Duplicate:** is there already a bundled or registry addon doing the same thing? If yes, is this meaningfully different?
+- **Sanity:** built and ran on the latest TrussC; sample present (unless the addon is trivially obvious — a tiny wrapper may not need one); README exists; no secrets / API keys committed.
+- **PRs:** open to merging the occasional pull request if one shows up? Not "actively maintain forever" — just "won't ghost a drive-by fix."
+
+Once settled, adding the topic is one click in GitHub repo settings. Don't preempt by adding the topic first and then chasing the checklist.
+
 ## Essential Patterns
 
 ### Namespace & Includes
@@ -170,7 +208,7 @@ See [node-system.md](node-system.md) § "UI Widget Design Patterns" for details 
 4. **Texture update twice per frame** → second call silently skipped (sokol limitation).
 5. **Forgot enableEvents()** → node won't receive mouse/key events.
 6. **Forgot redraw()** → screen doesn't update in event-driven mode.
-7. **setLineWidth()** → doesn't exist in sokol. drawLine is always 1px. Use StrokeMesh for thick lines.
+7. **setLineWidth()** → doesn't exist in sokol. drawLine is always 1px. For thick lines: `Path::drawStroke()` (uses StrokeMesh internally), or assemble StrokeMesh directly.
 8. **std::map vs tc::map** → name collision with `using namespace tc`. Use `std::map` explicitly if needed, or avoid `using namespace tc` in that file.
 9. **Copy Pixels/Image/Texture** → deleted copy constructor. Use `std::move()` or `Pixels::clone()`.
 10. **Node without make_shared** → `addChild()` fails. Always create nodes with `make_shared<>()`.
