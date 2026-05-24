@@ -160,8 +160,16 @@ getMouseButton()                   // -1 if none
 ### Keyboard
 
 ```cpp
-isKeyPressed(key)                  // Is key currently held?
+isKeyPressed(key)                  // Is key currently held? (exact key, e.g. KEY_LEFT_SHIFT vs KEY_RIGHT_SHIFT distinct)
+
+// "Either-side" modifier helpers — return true if either left or right variant is held
+isShiftPressed()                   // KEY_LEFT_SHIFT || KEY_RIGHT_SHIFT
+isControlPressed()                 // KEY_LEFT_CONTROL || KEY_RIGHT_CONTROL
+isAltPressed()                     // KEY_LEFT_ALT || KEY_RIGHT_ALT (Option on macOS)
+isSuperPressed()                   // KEY_LEFT_SUPER || KEY_RIGHT_SUPER (Cmd on macOS, Win on Windows)
 ```
+
+Safe to call from any thread-relevant entry point (setup / update / draw / event handlers) — these are just lookups into the global key-state set.
 
 **IMPORTANT: Letter keys are UPPERCASE** — sokol uses key codes, not ASCII characters.
 ```cpp
@@ -171,6 +179,21 @@ if (key == 'A') { /* ... */ }
 // WRONG — will never match
 if (key == 'a') { /* ... */ }
 ```
+
+**Common pattern — modifier + key combo:**
+```cpp
+void keyPressed(int key) {
+    if (isShiftPressed()) {
+        switch (key) {
+            case KEY_LEFT:  /* shift + left  */ break;
+            case KEY_RIGHT: /* shift + right */ break;
+        }
+    } else {
+        // plain arrow keys
+    }
+}
+```
+The modifier helper works inside `keyPressed()` because the shift key event already updated `keysPressed` before the arrow key event fires.
 
 Key constants:
 ```
