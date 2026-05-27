@@ -176,6 +176,70 @@ setTextAlign(Direction h, Direction v)
 setBitmapLineHeight(float)
 ```
 
+`drawBitmapString` accepts **UTF-8** and mixes halfwidth (8×13) +
+fullwidth (16×13) glyphs in a single atlas. ASCII (U+0020–U+007E) is
+built in (freeglut/X11 8×13). Codepoints with no registered glyph render
+as a **TOFU □** marker at atlas cell 95.
+
+### Extending the bitmap font
+
+The atlas is allocated **lazily** and grows row-by-row as needed. Headless
+apps and apps that never call `drawBitmapString` pay 0 KB of GPU memory.
+Apps or addons register additional glyphs via `tc::bitmapfont::`:
+
+```cpp
+using namespace bitmapfont;
+
+constexpr auto STAR = compile16x13({
+    "................",
+    "......##........",
+    "....######......",
+    "..############..",
+    "....########....",
+    "....##....##....",
+    "...##......##...",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+    "................",
+});
+
+void setup() {
+    static constexpr Glyph GLYPHS[] = {
+        { 0x2605, STAR.data(), Width::Fullwidth },  // ★
+    };
+    registerGlyphs(GLYPHS);
+}
+```
+
+API:
+```cpp
+namespace tc::bitmapfont {
+    enum class Width : uint8_t { Halfwidth = 1, Fullwidth = 2 };
+    struct Glyph { uint32_t codepoint; const uint8_t* data; Width width; };
+
+    void registerGlyph(const Glyph&);
+    template<size_t N> void registerGlyphs(const Glyph (&)[N]);
+    void updateGlyph(uint32_t cp, const uint8_t* newData);
+
+    constexpr std::array<uint8_t, 13> compile8x13(const char* const (&rows)[13]);
+    constexpr std::array<uint8_t, 26> compile16x13(const char* const (&rows)[13]);
+}
+```
+
+Data format: halfwidth = 13 bytes (1 byte/row, MSB-first); fullwidth = 26
+bytes (2 bytes/row: left 8 px + right 8 px, MSB-first).
+
+- **PUA convention:** Use U+E000–U+F8FF for custom logos/icons. No collision risk.
+- **Animation:** `updateGlyph(cp, newData)` swaps a glyph's data each frame
+  without reshuffling atlas cells. Internally uses `sg_update_image` once
+  per frame (sokol's `VALIDATE_UPDIMG_ONCE` is respected — second call
+  in same frame is silently deferred to next frame).
+- **Bulk packs:** Big glyph sets like Japanese kana live in separate addons
+  (e.g. `tcxBitmapStringKana`). Don't dump 200+ glyph data files into core.
+
 ### Font (TrueType via stb_truetype)
 
 ```cpp
