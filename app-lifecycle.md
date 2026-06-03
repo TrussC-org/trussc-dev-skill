@@ -341,6 +341,29 @@ Thread::sleep(milliseconds);
 3. **Pixels OK in background** — Image/Texture/Fbo are main-thread only
 4. **Use ThreadChannel** for safe cross-thread message passing
 
+### Timers (frame + async)
+
+Any Node (the App is one) can schedule callbacks. `callAfter`/`callEvery` fire
+from the **update loop** — main-thread and simple, but quantized to the frame
+rate (~16 ms) and slightly drifty. `callAfterAsync`/`callEveryAsync` fire from a
+**precise background scheduler thread** — no frame jitter, no drift — for
+sequencer clocks, LED/MIDI output, anything timing-sensitive.
+
+```cpp
+uint64_t a = callEvery(0.5, [this]{ tick(); });        // frame-driven
+cancelTimer(a); cancelAllTimers();
+
+uint64_t b = callEveryAsync(0.14, [this]{ step(); });  // off-thread, precise
+cancelAsyncTimer(b); cancelAllAsyncTimers();           // e.g. on mode change
+```
+
+The async callback runs **on the scheduler thread**, so the same rules as audio
+callbacks apply — guard shared state with a mutex, never draw from it,
+`AudioEngine::play()` is fine. **Gotcha:** call `cancelAsyncTimer` /
+`cancelAllAsyncTimers` WITHOUT holding the callback's mutex — cancel waits for an
+in-flight callback, which needs that mutex, so holding it deadlocks. `~Node`
+cancels leftovers and waits in-flight. Async is **native only** (real thread).
+
 ### Real-time audio & MIDI callbacks
 
 Two engine callbacks run on their **own** threads, not the update/draw thread.
