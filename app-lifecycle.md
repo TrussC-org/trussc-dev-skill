@@ -341,6 +341,51 @@ Thread::sleep(milliseconds);
 3. **Pixels OK in background** — Image/Texture/Fbo are main-thread only
 4. **Use ThreadChannel** for safe cross-thread message passing
 
+### Real-time audio & MIDI callbacks
+
+Two engine callbacks run on their **own** threads, not the update/draw thread.
+
+**`AudioEngine::audioOut`** fires on the audio thread, once per device buffer.
+Listeners take an ordering priority (`tc::audio::priority`):
+
+- `Generator = 100` (default) — a synth: **ADD** your samples into `b.data`.
+- `Effect = 500` — reads + writes the buffer (filter / reverb).
+- `Monitor = 900` — **read-only, runs last**: scope / FFT / recorder.
+
+Inside the callback do **only** cheap work — no allocation, no locks, no
+`AudioEngine::play()/load()`. For an oscilloscope, copy into a lock-free ring
+and draw it from the main thread:
+
+```cpp
+std::array<float, 1024> ring_{}; std::atomic<int> wpos_{0};
+EventListener tap_ = AudioEngine::getInstance().audioOut.listen(
+    [this](AudioOutBuffer& b){                       // audio thread
+        int w = wpos_.load(std::memory_order_relaxed);
+        for (int i = 0; i < b.frameCount; ++i) { ring_[w] = b.data[i*b.channels]; w = (w+1)%1024; }
+        wpos_.store(w, std::memory_order_release);
+    }, audio::priority::Monitor);
+```
+
+**`MidiIn::onMessage`** (tcxMidi) fires on libremidi's input thread the instant
+a message arrives — **event-driven, far lower jitter than polling**
+`getNextMessage()` once per frame. Two facts make it safe to trigger sound right
+there:
+
+- `AudioEngine::play()` is internally mutex-guarded (same lock as the mixer), so
+  it's safe to call from the MIDI thread.
+- The audioOut listener never touches your app mutex, so there's no lock
+  inversion with the audio thread.
+
+Guard any state the callback shares with draw()/update() behind a `std::mutex`,
+and keep the returned `EventListener` alive (RAII — dropping it unsubscribes):
+
+```cpp
+EventListener midiTap_ = midiIn_.onMessage.listen([this](MidiMessage& m){
+    std::lock_guard<std::mutex> lock(mtx_);   // guards synth + visual state
+    if (m.isNoteOn()) voice_.play();          // play() is thread-safe
+});
+```
+
 ---
 
 ## 3D Projection
