@@ -6,10 +6,13 @@ AI coding skill for [TrussC](https://github.com/tettou771/TrussC) — a lightwei
 
 | File | Contents |
 |------|----------|
-| `SKILL.md` | Entry point — build workflow, essential patterns, common pitfalls |
+| `SKILL.md` | Entry point — development loop, build workflow, essential patterns, common pitfalls |
+| `architecture.md` | Design philosophy — structuring apps with the Node hierarchy and Mods |
 | `app-lifecycle.md` | App class, window, input, math, threading, file utilities |
 | `graphics.md` | Drawing primitives, Color, Image/Pixels/Texture/Fbo/Shader |
 | `node-system.md` | Node/RectNode hierarchy, events, layout, UI design patterns |
+| `verify.md` | Runtime verification — MCP screenshots, input injection, ImGui driving, evidence rules |
+| `addon-authoring.md` | Creating & publishing addons (registry, addon.json, CI) |
 
 ## Install
 
