@@ -411,6 +411,41 @@ EventListener midiTap_ = midiIn_.onMessage.listen([this](MidiMessage& m){
 
 ---
 
+## Phone-Remote Debug Server (httplib)
+
+A highly effective technique for fullscreen / installation apps where an on-screen
+debug UI is awkward: **embed a tiny HTTP server and tune the app from a smartphone**
+on the same LAN. Drop cpp-httplib (single header) into `src/`, serve a phone-friendly
+page plus a small JSON API, and improvise the web side per project — anything from a
+few sliders to a status dashboard.
+
+The one non-negotiable rule is the threading pattern (same spirit as the rest of
+TrussC's threading rules): **the server thread never touches app state directly.**
+
+```
+server thread:  HTTP handlers only queue changes / read a snapshot (under mutex)
+main thread:    apply() once per frame — commit queued values, refresh the snapshot
+```
+
+```cpp
+// Sketch of the pattern (improvise the details):
+webPanel_.addFloat("Lens/aperture", &aperture_, 0.1f, 1.0f);  // register targets
+webPanel_.start(8765);    // setup(): server thread starts
+webPanel_.apply();        // update(): commit queued changes on the main thread
+// Phone: http://<machine-lan-ip>:8765/  (same network / tethering)
+```
+
+Notes:
+
+- Targets can be the same variables an ImGui panel edits — both UIs stay in sync
+  because commits happen on the main thread.
+- Runtime-only changes pair naturally with the bake-in workflow (tune on the phone,
+  write final values into the source).
+- This complements MCP rather than replacing it: MCP is for agents (and is how *you*
+  verify), the phone panel is for humans standing in front of the installation.
+
+---
+
 ## 3D Projection
 
 ```cpp
