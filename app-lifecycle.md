@@ -127,10 +127,19 @@ EVENT_DRIVEN = 0.0f // Only on redraw()
 redraw(count = 1)                  // Trigger draw frames
 ```
 
-**Typical pattern for apps with UI:**
+**Recommended pattern for GUI/tool apps — fixed update + event-driven draw:**
 ```cpp
-setIndependentFps(VSYNC, 0);      // Update at vsync, draw only on redraw()
+setIndependentFps(60, EVENT_DRIVEN);  // update at a fixed 60, draw only on redraw()
 ```
+
+Why this split matters for GUI work:
+- **Fixed update (60):** timers, tweens, and input polling tick at the same rate on
+  every machine — VSYNC-coupled update would run 2× on a 120 Hz display.
+- **Event-driven draw:** an idle GUI renders nothing; battery/GPU cost ~zero until
+  `redraw()` is called. Don't forget redraw() on every visible state change.
+
+`setIndependentFps(VSYNC, 0)` is the alternative when update should match the
+display (e.g. smooth per-frame animation sources driving an otherwise idle UI).
 
 ### Timing Queries
 

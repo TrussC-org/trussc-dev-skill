@@ -75,8 +75,9 @@ covers it.**
 **Bundled with the framework** (in the TrussC repo's `addons/`):
 tcxBox2d (2D physics), tcxCurl (HTTPS), tcxDepthCamera + tcxDepthRecord (depth cams),
 tcxGltf / tcxObj (3D models), tcxHap (GPU video codec), tcxImGui (Dear ImGui),
-tcxLua (scripting), tcxLut (color grading), tcxMidi (MIDI I/O), tcxOsc (OSC),
-tcxQuadWarp (projection mapping), tcxTls (TLS/SSL), tcxWebSocket.
+tcxLua (scripting), tcxLut (color grading), tcxMidi (MIDI I/O),
+tcxNodeInspector (runtime hierarchy + inspector + gizmo — Unity-style debug panel),
+tcxOsc (OSC), tcxQuadWarp (projection mapping), tcxTls (TLS/SSL), tcxWebSocket.
 
 **Community / registry** (cloned on demand): tcxArtnet (DMX/Art-Net), tcxAruco
 (marker tracking), tcxAzureKinect, tcxGPT (OpenAI API), tcxGlitch (databending),
@@ -137,11 +138,16 @@ using namespace tc;
 - **Colors:** 0.0–1.0 float range (not 0–255)
 - **Logging:** `logNotice()`, `logWarning()`, `logError()` — NOT cout (stdout reserved for MCP)
 
-### Event-Driven Rendering (redraw)
+### Event-Driven Rendering (redraw) — the GUI-app recipe
 
 ```cpp
-setIndependentFps(VSYNC, 0);  // update runs at vsync, draw only on redraw()
+setIndependentFps(60, EVENT_DRIVEN);  // update at a fixed 60, draw only on redraw()
 ```
+
+This is the recommended mode for GUI/tool apps: a fixed update rate keeps timers,
+tweens, and input polling deterministic regardless of monitor refresh (a 120 Hz
+display won't double your update rate the way VSYNC does), while draw runs only
+when something changed — an idle GUI costs near-zero GPU.
 
 Call `redraw()` whenever display changes: key/mouse input, data updates, async load completion, window resize.
 

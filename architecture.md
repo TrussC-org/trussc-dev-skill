@@ -114,6 +114,9 @@ tcApp (root)
 - **Draw order** is sibling order (`moveToFront()`/`moveToBack()` to reorder).
 - Mutating the tree during update/draw/dispatch is safe (children are snapshotted;
   `destroy()` and removals are deferred).
+- To *see* the structure while building it, drop in **tcxNodeInspector** (bundled
+  addon): a Unity-style hierarchy + inspector + gizmo over the live tree. Great for
+  checking that your decomposition actually looks like the diagram above.
 
 ## Loose Coupling with Event<T> + EventListener
 

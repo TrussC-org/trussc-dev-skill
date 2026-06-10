@@ -93,6 +93,12 @@ can inspect the exact state of every node and change it live, without rebuilding
 
 ("debugger opt-in" = the two `setup()` lines shown in Step 5.)
 
+These tools share state with **tcxNodeInspector** (bundled addon): the inspector is
+the human-side UI over the same reflection and the same selection — `select_node`
+highlights the node in its Hierarchy panel, and a node clicked in the inspector is
+what `get_selected_node` returns. Agent (MCP) and human (inspector) can debug the
+same session side by side.
+
 ```bash
 # Whole tree (use depth to keep output small; drill in via id)
 curl -s -X POST http://localhost:8080/mcp -H "Content-Type: application/json" \
@@ -105,7 +111,7 @@ Per-node JSON:
 {"type":"UIButton","id":1,
  "members":{"pos":[50,50,0],"globalPos":[50,50,0],"rotation":[0,0,0],
             "scale":[1,1,1],"visible":true,"active":true},
- "mods":["LayoutMod"],
+ "mods":[{"type":"LayoutMod","members":{"spacing":4.0,"padding":[5,5,5,5]}}],
  "childCount":10}
 ```
 
@@ -113,7 +119,8 @@ Per-node JSON:
   (euler XYZ — the one MCP-facing exception to TrussC's radian convention).
 - `depth` limits recursion; where children are cut off, `childCount` tells you how
   many were omitted — drill in with `get_node_tree {"id": <that node's id>}`.
-- `mods` lists attached Mod type names.
+- `mods` lists attached Mods as `{type, members}` — a Mod's `TC_REFLECT`ed members
+  (e.g. LayoutMod spacing/padding, TweenMod params) are included.
 - Give nodes names (`setName("scoreLabel")`) — trees with names are vastly easier to
   navigate than type-only dumps.
 
@@ -163,8 +170,8 @@ public:
 ```
 
 Reflect your tuning parameters and the live-tuning loop covers game/app variables,
-not just transforms. (Mod member reflection is not wired up yet — mods appear by
-type name only.)
+not just transforms. The same works inside Mods (`using Super = Mod;` + a
+`TC_REFLECT` block) — built-in LayoutMod/TweenMod already expose their parameters.
 
 ## Step 5: Drive the App (input injection — opt-in)
 
