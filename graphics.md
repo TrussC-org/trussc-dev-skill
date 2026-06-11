@@ -84,6 +84,35 @@ current `CurveStyle`; pass a positive int to force a fixed segment count.
 
 ## Style
 
+### Blend Modes
+
+```cpp
+setBlendMode(BlendMode::Alpha)     // default: src-alpha over
+setBlendMode(BlendMode::Add)       // additive (glows, trails)
+setBlendMode(BlendMode::Multiply) / Screen / Subtract / Disabled
+```
+
+**Depth gotcha (3D scenes):** every blend pipeline — Alpha, Add, even
+`Disabled` — is built WITHOUT depth state, so depth write/test are off while
+one is loaded. Only `internal::pipeline3d` (loaded by the frame's screen setup
+and by `EasyCam::begin()`) writes depth. After using a blend mode for an
+effect *inside* a 3D scene, switching to another blend mode does NOT bring
+depth back — everything drawn afterwards composites in submission order
+(typical symptom: a box's unlit bottom face overdraws its lit front face,
+which looks like "this face is black and no light affects it").
+
+```cpp
+// glow effect inside a 3D scene
+setBlendMode(BlendMode::Add);
+drawGlowyDots();
+setBlendMode(BlendMode::Alpha);                    // fix the recorded mode
+if (internal::pipeline3dInitialized)
+    sgl_load_pipeline(internal::pipeline3d);       // restore DEPTH pipeline
+```
+
+2D drawing after the 3D scene (HUD) is unaffected — it *wants* the no-depth
+alpha pipeline.
+
 ### Color
 
 ```cpp

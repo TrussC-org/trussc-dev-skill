@@ -154,24 +154,38 @@ After baking, rebuild and take one confirming screenshot.
 ### Exposing your own members: TC_REFLECT
 
 Base `Node` reflects `pos`, `globalPos`, `rotation`, `scale`, `visible`, `active`.
-Any member your own Node subclass exposes via a `TC_REFLECT` block joins them —
-readable in `get_node_tree`, writable via `set_node_members`, and editable in
-tcxNodeInspector:
+Any member your own class exposes via a `TC_REFLECT` block joins them — readable in
+`get_node_tree`, writable via `set_node_members`, and editable in tcxNodeInspector.
+
+One macro, `TC_VALUE`, covers everything — the arity decides the behavior:
 
 ```cpp
-class EnemyShip : public Node {
-public:
-    TC_REFLECT(EnemyShip)
-        TC_FIELD(speed)                                  // plain member
-        TC_PROPERTY(hullColor, getHullColor, setHullColor) // via getter/setter
-    TC_REFLECT_END
-    ...
+enum class WeaponType { Sword, Bow, Staff };
+TC_ENUM_LABELS(WeaponType, "Sword", "Bow", "Staff")   // namespace scope, optional
+
+struct Enemy : Node {
+    float hp = 100;
+    WeaponType weapon = WeaponType::Sword;
+    bool isAlive() const { return hp > 0; }
+
+    TC_REFLECT(Enemy, Node) {          // (Self, DirectBases...) — chains Node's block
+        TC_VALUE(hp)                   // 1 arg: plain member, edited in place
+        TC_VALUE(weapon)               // enums auto-detected (combo if TC_ENUM_LABELS)
+        TC_VALUE(alive, isAlive)       // 2 args: getter only → read-only (greyed out)
+        TC_VALUE(speed, getSpeed, setSpeed)  // 3 args: via setter (invariants run)
+    }
 };
 ```
 
+- The braces are yours — no `TC_REFLECT_END`. Base classes are listed explicitly
+  (`TC_REFLECT(Self, Base1, Base2...)`); a reflection root uses
+  `TC_REFLECT_ROOT(Self) { ... }`.
+- Supported types: float, int, bool, string, Vec2, Vec3, Color, and enums
+  (`TC_ENUM_LABELS` gives them human-readable labels; without it they travel as int).
+
 Reflect your tuning parameters and the live-tuning loop covers game/app variables,
-not just transforms. The same works inside Mods (`using Super = Mod;` + a
-`TC_REFLECT` block) — built-in LayoutMod/TweenMod already expose their parameters.
+not just transforms. The same works in Mods — `TC_REFLECT(MyMod, Mod) { ... }`;
+built-in LayoutMod/TweenMod already expose their parameters.
 
 ## Step 5: Drive the App (input injection — opt-in)
 
