@@ -20,7 +20,7 @@ AI coding skill for [TrussC](https://github.com/TrussC-org/TrussC) — a lightwe
 
 ```bash
 # Clone into your skills directory
-git clone https://github.com/TrussC-org/TrussC_Development_Skill.git ~/.claude/skills/trussc-dev
+git clone https://github.com/TrussC-org/trussc-dev-skill.git ~/.claude/skills/trussc-dev
 ```
 
 ### Cursor (2.4+)
@@ -33,7 +33,7 @@ inside your repository instead. Invoke manually by typing `/` in Agent chat.
 ### Codex
 
 ```bash
-git clone https://github.com/TrussC-org/TrussC_Development_Skill.git ~/.codex/skills/trussc-dev
+git clone https://github.com/TrussC-org/trussc-dev-skill.git ~/.codex/skills/trussc-dev
 ```
 
 ## Usage
