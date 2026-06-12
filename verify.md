@@ -203,15 +203,17 @@ If they're missing and you need to drive the app, add them (and mention it in yo
 
 | Tool | Arguments | Notes |
 |------|-----------|-------|
-| `mouse_move` | `x`, `y`, `button` | button held = drag. **`button` is required in practice** (docs say optional but omitting it errors) — pass `-1` for plain move |
+| `mouse_move` | `x`, `y`, `button` (opt) | with `button` held, emits a drag; omit for a plain move |
 | `mouse_click` | `x`, `y`, `button` | 0 = left, 1 = right. Press+release fire back-to-back |
+| `mouse_press` / `mouse_release` | `x`, `y`, `button` | hold/release a button — bracket a drag gesture |
 | `mouse_scroll` | `dx`, `dy` | |
 | `key_press` / `key_release` | `key` | sokol_app keycode — letters are UPPERCASE (`'A'` = 65) |
 
-Known gap: **EasyCam orbit-drag cannot be injected.** `mouse_click` emits press+release
-instantly, so EasyCam never enters its dragging state, and there are no separate
-press/release mouse tools. To verify the camera's mouse path, use `mouse_scroll`
-(zoom) instead, and treat drag-orbit as human-verifiable only.
+**Drag recipe** (EasyCam orbit, slider drags, node dragging):
+`mouse_press(x0,y0)` → `mouse_move(x1,y1,button:0)` × N steps → `mouse_release(xN,yN)`.
+`mouse_click` alone can NOT drag — its press+release fire in the same instant, so
+drag consumers never see an open gesture. (Tools added 2026-06-12; on older cores
+fall back to `mouse_scroll` to exercise the camera path.)
 
 ```bash
 curl -s -X POST http://localhost:8080/mcp -H "Content-Type: application/json" \
