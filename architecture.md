@@ -116,7 +116,15 @@ tcApp (root)
   `destroy()` and removals are deferred).
 - To *see* the structure while building it, drop in **tcxNodeInspector** (bundled
   addon): a Unity-style hierarchy + inspector + gizmo over the live tree. Great for
-  checking that your decomposition actually looks like the diagram above.
+  checking that your decomposition actually looks like the diagram above. It's a
+  singleton (no instance, no member) driven by a static API, so it runs itself from one
+  line in `setup()`: `NodeInspector::attach(KEY_F1)` — inits imgui and draws its own
+  frame on the live root (`getRootNode()`) every frame, F1 toggles it, no `draw()` code
+  needed. Pass a subtree to scope it (`attach(myRoot, KEY_F1)`); the call returns the
+  singleton so it chains into the instance API (`.setAccent(...)`). More keys via
+  `setToggleKey`/`addToggleKey`/`clearToggleKeys`. attach() OWNS the imgui frame, so if
+  your app already drives imgui itself, skip attach() and call
+  `NodeInspector::instance().draw(root)` inside your own `imguiBegin()`/`imguiEnd()`.
 
 ## Loose Coupling with Event<T> + EventListener
 
