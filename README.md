@@ -9,6 +9,7 @@ AI coding skill for [TrussC](https://github.com/TrussC-org/TrussC) — a lightwe
 | `SKILL.md` | Entry point — development loop, build workflow, essential patterns, common pitfalls |
 | `architecture.md` | Design philosophy — structuring apps with the Node hierarchy and Mods |
 | `app-lifecycle.md` | App class, window, input, math, threading, file utilities |
+| `utils.md` | Data utilities bundled in core — JSON (`tc::Json`), XML (`tc::Xml`), text/file IO, `getDataPath` |
 | `graphics.md` | Drawing primitives, Color, Image/Pixels/Texture/Fbo/Shader |
 | `node-system.md` | Node/RectNode hierarchy, events, layout, UI design patterns |
 | `verify.md` | Runtime verification — MCP screenshots, input injection, ImGui driving, evidence rules |

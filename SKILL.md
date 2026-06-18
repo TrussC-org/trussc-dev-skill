@@ -14,6 +14,7 @@ loop: **design → implement → build → run → verify**. See topic files for
 - [node-system.md](node-system.md) — Node, RectNode, ScrollContainer, events, timers, mods (API reference)
 - [graphics.md](graphics.md) — Drawing, colors, style, Image/Pixels/Texture/Fbo
 - [app-lifecycle.md](app-lifecycle.md) — App setup, window, input, logging, threading, math
+- [utils.md](utils.md) — Data utilities **bundled in core**: JSON (`tc::Json`), XML (`tc::Xml`), text/file IO, `getDataPath`. Reach for these before hand-parsing anything.
 - [verify.md](verify.md) — **Runtime verification**: MCP screenshots, input injection, ImGui driving, evidence rules
 - [addon-authoring.md](addon-authoring.md) — Creating & publishing addons (only when authoring one)
 
@@ -235,3 +236,4 @@ See [node-system.md](node-system.md) § "UI Widget Design Patterns" for details 
 18b. **`random()` collides with POSIX** → use `tc::random(min, max)` explicitly (there is no `randomf`). Unqualified `random()` can resolve to the C library function and compile to the wrong thing silently.
 18c. **EasyCam starts at elevation 0 (true side view)** → flat scenes (orbits, ground planes) look like a line on first launch. Set an initial angle explicitly: `cam.setElevation(...)` / `cam.setAzimuth(...)`.
 19. **EasyCam `enableMouseInput()` eats every left-press** → it consumes the press as orbit-start during `events().mousePressed`, and tree dispatch only runs `if (!consumed)` — all RectNode/Node mouse handlers silently stop working while app-level `mousePressed()` virtuals still fire (confusing!). With clickable nodes, either skip `enableMouseInput()`, or move orbit to `setOrbitButton(right)` / `setDragModifier(shift)`. Debug trick: `get_selected_node` after an MCP `mouse_click` — null selection on a known RectNode proves dispatch never ran.
+20. **Hand-rolling JSON/XML parsing** → core already bundles `tc::Json` (nlohmann/json) and `tc::Xml` (pugixml), both included via `<TrussC.h>`. Use `loadJson/parseJson` and `loadXml/parseXml` — never scan strings for `"key":`. See [utils.md](utils.md).
