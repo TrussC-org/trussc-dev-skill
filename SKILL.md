@@ -12,7 +12,7 @@ loop: **design → implement → build → run → verify**. See topic files for
 
 - [architecture.md](architecture.md) — **How to structure an app**: Node hierarchy as code separation, Mods for cross-cutting behavior. Read before building anything beyond a single-file sketch.
 - [node-system.md](node-system.md) — Node, RectNode, ScrollContainer, events, timers, mods (API reference)
-- [graphics.md](graphics.md) — Drawing, colors, style, Image/Pixels/Texture/Fbo
+- [graphics.md](graphics.md) — Drawing, colors, style, Image/Pixels/Texture/Fbo, video recording
 - [app-lifecycle.md](app-lifecycle.md) — App setup, window, input, logging, threading, math
 - [utils.md](utils.md) — Data utilities **bundled in core**: JSON (`tc::Json`), XML (`tc::Xml`), text/file IO, `getDataPath`. Reach for these before hand-parsing anything.
 - [verify.md](verify.md) — **Runtime verification**: MCP screenshots, input injection, ImGui driving, evidence rules
@@ -25,6 +25,27 @@ loop: **design → implement → build → run → verify**. See topic files for
 3. **Build** — `trusscli build`. Fix errors before claiming anything.
 4. **Verify** — launch with `TRUSSC_MCP=1`, screenshot, drive inputs, check state ([verify.md](verify.md)).
 5. **Report** — verdict is **COMPLETE / COMPLETE WITH NOTES / BLOCKED** with an evidence table. A successful build alone is never COMPLETE.
+
+## Feature existence check
+
+To answer "does TrussC have feature/function X" — **don't guess from memory.** Load
+the index first; it turns vague recall into a confident yes/no:
+
+1. **Read `trussc/docs/FOR_AI_ASSISTANT.md`** (in the TrussC repo). It carries a
+   complete C++ API index — derived from the clang AST (so it can't drift from the
+   real API) — plus an auto-generated bundled-addon list. If the symbol is in the
+   index, it exists; if it isn't, it almost certainly doesn't (or lives in an
+   addon — check next).
+2. **For addons specifically**, consult the registry — the canonical, always-current
+   source. Either query it directly or use trusscli:
+
+   ```bash
+   curl -s https://raw.githubusercontent.com/TrussC-org/trussc-addons/gh-pages/registry.json | jq -r '.addons[] | "\(.name)\t\(.description)"'
+   trusscli addon search <query>
+   ```
+
+Loading the index before answering avoids both false negatives ("TrussC can't do X"
+when it can) and lexical-grep misses. Prefer it over searching headers ad hoc.
 
 ## Build Workflow
 
@@ -43,9 +64,12 @@ TrussC uses `file(GLOB_RECURSE CONFIGURE_DEPENDS ...)`. Ninja picks up new files
 ```bash
 trusscli build                          # Build only
 trusscli run                            # Build and launch
+trusscli build --warnings               # + enable -Wall -Wextra on your own code
 ```
 
 Always use `trusscli` instead of calling `cmake` directly. If `trusscli` can't do something you need, report it to the user.
+
+**`--warnings` (opt-in compiler warnings):** turns on `-Wall -Wextra` (MSVC `/W4`) for the **app's own sources only** — TrussC, sokol/stb, and addon headers are system includes, so they're not flagged. No `-Werror` (warnings never break the build). Sticky in the CMake cache: stays on until a reconfigure without it (e.g. `trusscli update`). Use it to catch unused vars, sign mismatches, etc. in your sketch code.
 
 ### trusscli
 
@@ -60,7 +84,9 @@ Other common commands:
 trusscli new /path/to/project           # Create new project
 trusscli build                          # Build (native platform)
 trusscli build --release                # Release config
+trusscli build --warnings               # -Wall -Wextra on YOUR code (opt-in; see below)
 trusscli run                            # Build and launch
+trusscli run --warnings                 # Build+launch with warnings on your code
 trusscli clean                          # Delete build dirs
 trusscli upgrade                        # Pull latest TrussC + rebuild trusscli
 trusscli doctor                         # Check dev environment
@@ -72,6 +98,10 @@ trusscli info                           # Show project / framework info
 Addons live in `addons/` next to the project. Before writing functionality from
 scratch (networking, physics, CV, model loading…), **check whether an addon already
 covers it.**
+
+> Core already has the basics — don't reinvent: `UdpSocket` / `TcpClient` / `TcpServer`
+> (sockets), `Serial` (+ `Serial::listDevices()`), and `listNetworkInterfaces()` /
+> `getLocalIp()` for enumerating NICs & the host LAN IP (see `tc/network/tcNetworkInterface.h`).
 
 **Bundled with the framework** (in the TrussC repo's `addons/`):
 tcxBox2d (2D physics), tcxCurl (HTTPS), tcxDepthCamera + tcxDepthRecord (depth cams),
