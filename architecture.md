@@ -79,8 +79,11 @@ Key rules:
 - **Draw in local coordinates.** Never compute "where am I on screen" — set the node's
   transform (`setPos`/`setRot`/`setScale`) and draw around (0,0). Children inherit the
   transform automatically. `getMouseX()/getMouseY()` inside a node are local too.
-- **Input is opt-in:** call `enableEvents()` (base `Node` does not enable it; `RectNode`
-  does). Mouse events arrive in local coords; return `true` to consume.
+- **Input is opt-in:** call `enableEvents()` — neither base `Node` nor plain `RectNode`
+  enables it (only ready-made interactive widgets like `RectNodeButton` and
+  `ScrollContainer` do, in their constructors). A forgotten `enableEvents()` means the
+  node silently never receives mouse events. Mouse events arrive in local coords;
+  return `true` to consume.
 - **Lifecycle:** `destroy()` marks the node dead (removed safely later); `cleanup()` is
   the teardown hook; `setActive(false)` disables update+draw+events for the subtree;
   `setVisible(false)` hides but keeps updating.
