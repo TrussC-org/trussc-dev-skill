@@ -94,20 +94,29 @@ setBlendMode(BlendMode::Multiply) / Screen / Subtract / Disabled
 
 **Depth gotcha (3D scenes):** every blend pipeline — Alpha, Add, even
 `Disabled` — is built WITHOUT depth state, so depth write/test are off while
-one is loaded. Only `internal::pipeline3d` (loaded by the frame's screen setup
+one is loaded. Only the 3D pipeline (loaded by the frame's screen setup
 and by `EasyCam::begin()`) writes depth. After using a blend mode for an
 effect *inside* a 3D scene, switching to another blend mode does NOT bring
 depth back — everything drawn afterwards composites in submission order
 (typical symptom: a box's unlit bottom face overdraws its lit front face,
 which looks like "this face is black and no light affects it").
 
+There is **no public API to re-enable depth mid-scene** (a public
+`enableDepthTest()` is on the roadmap). Structure the frame instead:
+
 ```cpp
-// glow effect inside a 3D scene
+// Order the frame: depth-tested 3D first, blended effects last
+cam.begin();
+drawSolidGeometry();       // depth-tested (3D pipeline)
 setBlendMode(BlendMode::Add);
-drawGlowyDots();
-setBlendMode(BlendMode::Alpha);                    // fix the recorded mode
-if (internal::pipeline3dInitialized)
-    sgl_load_pipeline(internal::pipeline3d);       // restore DEPTH pipeline
+drawGlowyDots();           // blended, no depth — draw these LAST in the scope
+cam.end();
+
+// Need depth-tested 3D again? Start a new camera scope:
+setBlendMode(BlendMode::Alpha);
+cam.begin();               // reloads the depth-enabled 3D pipeline
+drawMoreGeometry();
+cam.end();
 ```
 
 2D drawing after the 3D scene (HUD) is unaffected — it *wants* the no-depth
