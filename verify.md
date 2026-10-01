@@ -52,21 +52,21 @@ sleep 2
 
 - Fixed port (8080 here) is easiest for scripting. With no port set, the OS assigns
   one. Once the port is bound, the app logs it as a Notice line (stdout, the log
-  file and `onLog`): `[MCP] HTTP server listening on http://localhost:PORT/mcp`
-- All requests are JSON-RPC 2.0 over `POST http://localhost:PORT/mcp`.
+  file and `onLog`): `[MCP] HTTP server listening on http://127.0.0.1:PORT/mcp`
+- All requests are JSON-RPC 2.0 over `POST http://127.0.0.1:PORT/mcp`.
 - Send `initialize` once before calling tools.
 - This works headlessly enough for CI-ish verification on macOS — no screen-recording
   (TCC) permission needed, because the app screenshots itself.
 
 ```bash
-curl -s -X POST http://localhost:8080/mcp -H "Content-Type: application/json" \
+curl -s -X POST http://127.0.0.1:8080/mcp -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{}}'
 ```
 
 ## Step 3: Screenshot (always available)
 
 ```bash
-curl -s -X POST http://localhost:8080/mcp -H "Content-Type: application/json" \
+curl -s -X POST http://127.0.0.1:8080/mcp -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"tools/call","id":2,"params":{"name":"save_screenshot","arguments":{"path":"/tmp/verify_01.png"}}}'
 ```
 
@@ -102,7 +102,7 @@ same session side by side.
 
 ```bash
 # Whole tree (use depth to keep output small; drill in via id)
-curl -s -X POST http://localhost:8080/mcp -H "Content-Type: application/json" \
+curl -s -X POST http://127.0.0.1:8080/mcp -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"tools/call","id":3,"params":{"name":"get_node_tree","arguments":{"depth":1}}}'
 ```
 
@@ -127,7 +127,7 @@ Per-node JSON:
 
 ```bash
 # Move, rotate, and scale node id=1 — applied immediately, next frame shows it
-curl -s -X POST http://localhost:8080/mcp -H "Content-Type: application/json" \
+curl -s -X POST http://127.0.0.1:8080/mcp -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"tools/call","id":4,"params":{"name":"set_node_members","arguments":{"id":1,"members":{"pos":[420,420,0],"rotation":[0,0,15],"scale":[1.3,1.3,1.3]}}}}'
 ```
 
@@ -217,7 +217,7 @@ drag consumers never see an open gesture. (Tools added 2026-06-12; on older core
 fall back to `mouse_scroll` to exercise the camera path.)
 
 ```bash
-curl -s -X POST http://localhost:8080/mcp -H "Content-Type: application/json" \
+curl -s -X POST http://127.0.0.1:8080/mcp -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"tools/call","id":3,"params":{"name":"mouse_click","arguments":{"x":100,"y":200}}}'
 ```
 
@@ -243,7 +243,7 @@ register automatically — look for `[MCP] ImGui tools registered` on stderr.
 ### Discover: imgui_get_widgets
 
 ```bash
-curl -s -X POST http://localhost:8080/mcp -H "Content-Type: application/json" \
+curl -s -X POST http://127.0.0.1:8080/mcp -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"tools/call","id":3,"params":{"name":"imgui_get_widgets","arguments":{}}}'
 ```
 
@@ -281,11 +281,11 @@ typed number lands exactly:
 
 ```bash
 # Set a SliderFloat to exactly 0.85
-curl -s -X POST http://localhost:8080/mcp -H "Content-Type: application/json" \
+curl -s -X POST http://127.0.0.1:8080/mcp -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"tools/call","id":4,"params":{"name":"imgui_input","arguments":{"label":"Slider","text":"0.85"}}}'
 
 # Set one channel of ColorEdit3("Background") to 200
-curl -s -X POST http://localhost:8080/mcp -H "Content-Type: application/json" \
+curl -s -X POST http://127.0.0.1:8080/mcp -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"tools/call","id":5,"params":{"name":"imgui_input","arguments":{"label":"##X","text":"200"}}}'
 ```
 
@@ -332,7 +332,7 @@ you and the user prefer; they only exist in MCP mode.
 ## Step 8: Clean Up
 
 ```bash
-curl -s -X POST http://localhost:8080/mcp -H "Content-Type: application/json" \
+curl -s -X POST http://127.0.0.1:8080/mcp -H "Content-Type: application/json" \
   -d '{"jsonrpc":"2.0","method":"tools/call","id":9,"params":{"name":"quit","arguments":{}}}'
 # fallback if unresponsive:
 kill %1 2>/dev/null

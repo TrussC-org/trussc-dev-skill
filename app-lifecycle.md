@@ -244,7 +244,7 @@ BIN=bin/MyApp.app/Contents/MacOS/MyApp        # the real binary, not `open`
 TRUSSC_MCP=1 TRUSSC_MCP_PORT=8765 "$BIN" >/tmp/app.log 2>&1 &
 sleep 3                                        # wait for "[MCP] HTTP server listening on ..."
 
-URL=http://localhost:8765/mcp                  # NOTE: path is /mcp, not /
+URL=http://127.0.0.1:8765/mcp                  # NOTE: path is /mcp, not /
 curl -s -X POST $URL -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{}}'
 curl -s -X POST $URL -H 'Content-Type: application/json' \
@@ -254,7 +254,7 @@ curl -s -X POST $URL -H 'Content-Type: application/json' \
 
 Then open `/tmp/shot.png`. Gotchas:
 
-- Endpoint is `http://localhost:PORT/mcp` — posting to `/` returns **404**.
+- Endpoint is `http://127.0.0.1:PORT/mcp` — posting to `/` returns **404**.
 - `save_screenshot {path}` writes a file (best for this flow). `get_screenshot`
   returns base64 PNG inline; a per-frame PNG encode can contend with it, so
   prefer `save_screenshot`.
