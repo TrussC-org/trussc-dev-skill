@@ -51,7 +51,8 @@ sleep 2
 ```
 
 - Fixed port (8080 here) is easiest for scripting. With no port set, the OS assigns
-  one and prints it to stderr: `[MCP] HTTP server listening on http://localhost:PORT/mcp`
+  one. Once the port is bound, the app logs it as a Notice line (stdout, the log
+  file and `onLog`): `[MCP] HTTP server listening on http://localhost:PORT/mcp`
 - All requests are JSON-RPC 2.0 over `POST http://localhost:PORT/mcp`.
 - Send `initialize` once before calling tools.
 - This works headlessly enough for CI-ish verification on macOS — no screen-recording

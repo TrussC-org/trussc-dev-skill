@@ -242,7 +242,7 @@ on locked-down terminals and grabs other windows too).
 ```bash
 BIN=bin/MyApp.app/Contents/MacOS/MyApp        # the real binary, not `open`
 TRUSSC_MCP=1 TRUSSC_MCP_PORT=8765 "$BIN" >/tmp/app.log 2>&1 &
-sleep 3                                        # wait for "MCP HTTP server started"
+sleep 3                                        # wait for "[MCP] HTTP server listening on ..."
 
 URL=http://localhost:8765/mcp                  # NOTE: path is /mcp, not /
 curl -s -X POST $URL -H 'Content-Type: application/json' \
