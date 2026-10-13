@@ -21,6 +21,34 @@ tcxMyAddon/
 - Public symbols live under `tcx::` (alias of `trussc::ext`).
 - Full authoring guide: `docs/ADDONS.md` in the TrussC repo.
 
+## MCP tools (v0.8)
+
+Register tools during addon setup regardless of the current grant. Only `tc_` is
+reserved for core (registration is rejected); `tcx_` is free for apps and addons.
+Conventionally use `tcx_<addon>_*` and declare a level on every tool:
+
+```cpp
+mcp::tool("tcx_example_reset", "Reset the addon state")
+    .level(mcp::ToolLevel::Control)
+    .bind(std::function<json()>([this] {
+        reset();
+        return json{{"status", "ok"}};
+    }));
+```
+
+Use ReadOnly for inspection and Control for mutation. Omitting `.level()` means
+Public; choose that deliberately or compile development-only tools out.
+Registration never starts the listener. The app owns the grant: let it call
+`mcp::setToolLevel(mcp::ToolLevel::ReadOnly)` or `Control` in `setup()`; do not
+grant access from an addon. Control includes ReadOnly, and list/call checks use
+the current grant regardless of registration order.
+
+For development, use `trusscli run --mcp`; a build without `--mcp` clears the dev
+switch. `TRUSSC_MCP=1` / `TRUSSC_MCP_PORT` in a default Public build exposes only
+loopback `tc_get_health`, not addon tools. Check the startup exposure log or
+`tools/list` for third-party tools' levels; see [verify.md](verify.md) for the
+listener/environment rules and deprecated aliases.
+
 ## Registry (automatic listing — no PR)
 
 TrussC wants more addons — encourage authoring without ceremony. The crawler lists a
