@@ -225,7 +225,10 @@ logError()   << "error message";
 logNotice("TAG") << "tagged message";
 ```
 
-**Never use cout** — stdout is reserved for MCP communication. Logs go to stderr.
+**Use the logger instead of cout** for log sinks and `onLog` events. On desktop,
+Verbose/Notice go to stdout; Warning and above go to stderr (subject to console
+log level). `setLogFile()` / `TRUSSC_LOG_FILE` adds a file sink independently of
+MCP. MCP uses HTTP only; stdout is not reserved for it.
 
 LogLevel: Verbose, Notice, Warning, Error, Fatal, Silent
 
@@ -240,8 +243,10 @@ screen-recording / TCC permission** (unlike macOS `screencapture`, which fails
 on locked-down terminals and grabs other windows too).
 
 ```bash
+trusscli build --mcp                        # v0.8 dev build: Control, auto-start
 BIN=bin/MyApp.app/Contents/MacOS/MyApp        # the real binary, not `open`
-TRUSSC_MCP=1 TRUSSC_MCP_PORT=8765 "$BIN" >/tmp/app.log 2>&1 &
+TRUSSC_MCP_PORT=8765 "$BIN" >/tmp/app.log 2>&1 &
+APP_PID=$!
 sleep 3                                        # wait for "[MCP] HTTP server listening on ..."
 
 URL=http://127.0.0.1:8765/mcp                  # NOTE: path is /mcp, not /
@@ -249,23 +254,28 @@ curl -s -X POST $URL -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","method":"initialize","id":1,"params":{}}'
 curl -s -X POST $URL -H 'Content-Type: application/json' \
   -d '{"jsonrpc":"2.0","method":"tools/call","id":2,
-       "params":{"name":"save_screenshot","arguments":{"path":"/tmp/shot.png"}}}'
+       "params":{"name":"tc_save_screenshot","arguments":{"path":"/tmp/shot.png"}}}'
 ```
 
 Then open `/tmp/shot.png`. Gotchas:
 
 - Endpoint is `http://127.0.0.1:PORT/mcp` — posting to `/` returns **404**.
-- `save_screenshot {path}` writes a file (best for this flow). `get_screenshot`
-  returns base64 PNG inline; a per-frame PNG encode can contend with it, so
-  prefer `save_screenshot`.
-- Standard MCP tools when `TRUSSC_MCP=1`: `mouse_move`, `mouse_click`,
-  `key_press`, `get_screenshot`, `save_screenshot` (+ any app-specific tools).
-  So you can also *script interaction* before capturing.
+- `tc_save_screenshot {"path":"/tmp/shot.png"}` queues a file capture; wait for the
+  file before opening it. `tc_get_screenshot` returns an inline MCP image block
+  (PNG by default). Both require ReadOnly or Control.
+- `trusscli run --mcp` also builds and launches with Control, enabling
+  `tc_mouse_move`, `tc_mouse_click`, `tc_key_press` and `tc_quit`. Building without
+  `--mcp` clears the dev switch. For an ordinary build, call
+  `mcp::setToolLevel(mcp::ToolLevel::ReadOnly)` in `setup()` (Control for input).
+- `TRUSSC_MCP=1` / `TRUSSC_MCP_PORT` alone in a default Public build exposes only
+  loopback `tc_get_health`; `TRUSSC_MCP=0` prevents even a dev listener. See
+  [verify.md](verify.md) for levels and environment rules.
+- After inspection, call `tc_quit` (Control) or `kill "$APP_PID"` to stop the app.
 - In-app alternative for one-off captures: `fbo.save("shot.png")` (see
   graphics.md) or render a frame and save the default framebuffer.
 
-This is the reliable path when the GUI/MCP launch itself is flaky — verify by
-framebuffer, not by what's on the physical screen.
+The app still needs a working graphics/window session and must render frames;
+MCP capture removes the need for desktop screen capture, not for GUI startup.
 
 ---
 

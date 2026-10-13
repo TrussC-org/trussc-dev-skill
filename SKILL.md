@@ -23,7 +23,7 @@ loop: **design → implement → build → run → verify**. See topic files for
 1. **Design** — structure the app as Node subclasses + Mods ([architecture.md](architecture.md)), not as one giant `tcApp::draw()`.
 2. **Implement** — follow the patterns below. New/renamed/deleted source files → `trusscli update`.
 3. **Build** — `trusscli build`. Fix errors before claiming anything.
-4. **Verify** — launch with `TRUSSC_MCP=1`, screenshot, drive inputs, check state ([verify.md](verify.md)).
+4. **Verify** — `trusscli run --mcp` (v0.8 dev build, Control access), screenshot, drive inputs, check state ([verify.md](verify.md)). A build without `--mcp` clears the dev switch.
 5. **Report** — verdict is **COMPLETE / COMPLETE WITH NOTES / BLOCKED** with an evidence table. A successful build alone is never COMPLETE.
 
 ## Feature existence check
@@ -167,7 +167,7 @@ using namespace tc;
 
 - **Angles:** TAU (= 2π, full rotation). NOT PI.
 - **Colors:** 0.0–1.0 float range (not 0–255)
-- **Logging:** `logNotice()`, `logWarning()`, `logError()` — NOT cout (stdout reserved for MCP)
+- **Logging:** use `logNotice()`, `logWarning()`, `logError()` for log sinks/events. Desktop console: Verbose/Notice → stdout, Warning and above → stderr. MCP uses HTTP, not stdout.
 
 ### Event-Driven Rendering (redraw) — the GUI-app recipe
 
@@ -264,5 +264,5 @@ See [node-system.md](node-system.md) § "UI Widget Design Patterns" for details 
 17. **setBlendMode() inside a 3D scene kills depth** → EVERY blend pipeline (Alpha, Add, even Disabled) has depth write/test OFF; only the 3D pipeline (loaded by screen setup / `EasyCam::begin()`) writes depth. "Restoring" with `setBlendMode(Alpha)` after an additive effect leaves the rest of the scene depth-less — geometry renders in submission order, so a box's unlit BOTTOM face overwrites its lit front face (looks like a pitch-black face / lights mysteriously having no effect). There is no public API to re-enable depth mid-scene — draw all depth-tested 3D first and blended effects last, or start a new camera scope (`EasyCam::begin()` reloads the depth-enabled pipeline). See graphics.md § Blend Modes.
 18. **`random()` collides with POSIX** → use `tc::random(min, max)` explicitly (there is no `randomf`). Unqualified `random()` can resolve to the C library function and compile to the wrong thing silently.
 19. **EasyCam starts at elevation 0 (true side view)** → flat scenes (orbits, ground planes) look like a line on first launch. Set an initial angle explicitly: `cam.setElevation(...)` / `cam.setAzimuth(...)`.
-20. **EasyCam `enableMouseInput()` eats every left-press** → it consumes the press as orbit-start during `events().mousePressed`, and tree dispatch only runs `if (!consumed)` — all RectNode/Node mouse handlers silently stop working while app-level `mousePressed()` virtuals still fire (confusing!). With clickable nodes, either skip `enableMouseInput()`, or move orbit to `setOrbitButton(right)` / `setDragModifier(shift)`. Debug trick: `get_selected_node` after an MCP `mouse_click` — null selection on a known RectNode proves dispatch never ran.
+20. **EasyCam `enableMouseInput()` eats every left-press** → it consumes the press as orbit-start during `events().mousePressed`, and tree dispatch only runs `if (!consumed)` — all RectNode/Node mouse handlers silently stop working while app-level `mousePressed()` virtuals still fire (confusing!). With clickable nodes, either skip `enableMouseInput()`, or move orbit to `setOrbitButton(right)` / `setDragModifier(shift)`. Debug trick: `tc_get_selected_node` after an MCP `tc_mouse_click` — null selection on a known RectNode is a clue to check hit testing and whether tree dispatch ran.
 21. **Hand-rolling JSON/XML parsing** → core already bundles `tc::Json` (nlohmann/json) and `tc::Xml` (pugixml), both included via `<TrussC.h>`. Use `loadJson/parseJson` and `loadXml/parseXml` — never scan strings for `"key":`. See [utils.md](utils.md).
