@@ -76,6 +76,11 @@ the host grant survives hot reload, and code cannot lower a dev build's Control.
 - Fixed port (8080 here) is easiest for scripting. With no port set, the OS assigns
   one. The bound endpoint is logged at Notice level (desktop stdout, a configured
   log file, and `onLog`, subject to sink levels; `onLog` receives every line).
+  Since v0.8 there is no raw copy on stderr: to discover a port, match
+  `HTTP server listening on http://` in stdout or the `TRUSSC_LOG_FILE` file
+  (the line carries the Logger's timestamp and `[NOTICE]` prefix), or skip
+  parsing with a fixed `TRUSSC_MCP_PORT`. A console level of Warning or higher
+  hides the line on stdout only.
 - All requests are JSON-RPC 2.0 over `POST http://127.0.0.1:PORT/mcp`.
   MCP does not use stdout. Web builds have no HTTP listener.
 - Send `initialize` once before calling tools.

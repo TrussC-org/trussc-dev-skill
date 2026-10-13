@@ -247,7 +247,9 @@ trusscli build --mcp                        # v0.8 dev build: Control, auto-star
 BIN=bin/MyApp.app/Contents/MacOS/MyApp        # the real binary, not `open`
 TRUSSC_MCP_PORT=8765 "$BIN" >/tmp/app.log 2>&1 &
 APP_PID=$!
-sleep 3                                        # wait for "[MCP] HTTP server listening on ..."
+for i in $(seq 50); do                         # up to 10 s for the Logger Notice on stdout
+  grep -q "HTTP server listening on" /tmp/app.log && break; sleep 0.2
+done
 
 URL=http://127.0.0.1:8765/mcp                  # NOTE: path is /mcp, not /
 curl -s -X POST $URL -H 'Content-Type: application/json' \
