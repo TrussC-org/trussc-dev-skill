@@ -39,9 +39,9 @@ When the `trussc_search` tool is available, use it whenever you need TrussC
 knowledge: which API to use, how something behaves, examples, addons.
 
 - Search with a plain question, in English or Japanese. You don't need the exact API name.
-- Every result, and every line under "Other possibly related", carries an `[#id]`. Pass ids to `trussc_get` to read a cut-short example in full or to open a related card.
+- Every result, and every line under "Other possibly related", carries an id tag like `[#symbol:Sound::play]`. Pass the id without the `#` (`symbol:Sound::play`) to `trussc_get` to read a cut-short example in full or to open a related card.
 - It covers the TrussC `main` API, guides, examples, release notes, known open bugs and the
-  registered addons, and can lag the newest commits a little.
+  registered addons, and can lag behind the newest commits.
   For a definite yes/no on whether a symbol exists, the API index below is still the authority.
 - It is a beta service. If it is busy, rate-limited (HTTP 429) or down, don't keep
   retrying: look things up yourself with the steps below and in the TrussC headers.
