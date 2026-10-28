@@ -26,6 +26,27 @@ loop: **design → implement → build → run → verify**. See topic files for
 4. **Verify** — `trusscli run --mcp` (v0.8 dev build, Control access), screenshot, drive inputs, check state ([verify.md](verify.md)). A build without `--mcp` clears the dev switch.
 5. **Report** — verdict is **COMPLETE / COMPLETE WITH NOTES / BLOCKED** with an evidence table. A successful build alone is never COMPLETE.
 
+## Docs search (MCP, beta)
+
+The TrussC docs search server is an MCP server at `https://api.trussc.org/mcp`
+(Streamable HTTP). Connect it once:
+
+```bash
+claude mcp add --transport http --scope user trussc-docs https://api.trussc.org/mcp
+```
+
+When the `trussc_search` tool is available, use it whenever you need TrussC
+knowledge: which API to use, how something behaves, examples, addons.
+
+- Search with a plain question, in English or Japanese. You don't need the exact API name.
+- Every result, and every line under "Other possibly related", carries an `[#id]`. Pass ids to `trussc_get` to read a cut-short example in full or to open a related card.
+- It covers the TrussC `main` API, guides, examples, release notes, known open bugs and the
+  registered addons, and can lag the newest commits a little.
+  For a definite yes/no on whether a symbol exists, the API index below is still the authority.
+- It is a beta service. If it is busy, rate-limited (HTTP 429) or down, don't keep
+  retrying: look things up yourself with the steps below and in the TrussC headers.
+- Queries are logged to improve search and kept for about six months. Never put secrets, credentials or private code in a query.
+
 ## Feature existence check
 
 To answer "does TrussC have feature/function X" — **don't guess from memory.** Load
