@@ -286,9 +286,9 @@ bytes (2 bytes/row: left 8 px + right 8 px, MSB-first).
 
 - **PUA convention:** Use U+E000–U+F8FF for custom logos/icons. No collision risk.
 - **Animation:** `updateGlyph(cp, newData)` swaps a glyph's data each frame
-  without reshuffling atlas cells. Internally uses `sg_update_image` once
-  per frame (sokol's `VALIDATE_UPDIMG_ONCE` is respected — second call
-  in same frame is silently deferred to next frame).
+  without reshuffling atlas cells. The atlas is rebuilt at the next bitmap
+  string draw and copied to the GPU right away, so several updates in one
+  frame are fine and the next draw shows the latest data.
 - **Bulk packs:** Big glyph sets like Japanese kana live in separate addons
   (e.g. `tcxBitmapStringKana`). Don't dump 200+ glyph data files into core.
 
@@ -443,7 +443,10 @@ tex.clear();
 - `Stream` — update every frame (for video)
 - `RenderTarget` — for Fbo attachment
 
-**Limitation:** `loadData()` can only be called ONCE per frame. Second call is silently skipped.
+**Uploads:** `loadData()` copies right away through a staging buffer, and several
+calls per frame are fine. Outside a render pass it copies immediately. Inside a
+pass it flushes pending drawing, suspends the pass, copies, and resumes with the
+pass contents kept, so the next draw shows the new pixels.
 
 ---
 
@@ -463,7 +466,7 @@ img.draw(x, y, w, h);
 img.getColor(x, y);
 img.setColor(x, y, Color);
 img.getPixels();                   // Pixels& reference
-img.update();                      // Sync pixel changes to GPU (once/frame!)
+img.update();                      // Sync pixel changes to GPU
 
 img.save("/path/to/output.png");
 img.clear();
