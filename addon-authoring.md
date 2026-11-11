@@ -19,7 +19,7 @@ tcxMyAddon/
 
 - Pure header/source addons need no CMakeLists.txt — the parent app picks up `src/` automatically.
 - Public symbols live under `tcx::` (alias of `trussc::ext`).
-- Full authoring guide: `docs/ADDONS.md` in the TrussC repo.
+- Full authoring guide: `docs/guides/ADDONS.md` in the TrussC repo.
 
 ## MCP tools (v0.8)
 

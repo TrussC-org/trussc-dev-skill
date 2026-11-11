@@ -53,7 +53,7 @@ knowledge: which API to use, how something behaves, examples, addons.
 To answer "does TrussC have feature/function X" — **don't guess from memory.** Load
 the index first; it turns vague recall into a confident yes/no:
 
-1. **Read `trussc/docs/FOR_AI_ASSISTANT.md`** (in the TrussC repo). It carries a
+1. **Read `trussc/docs/guides/FOR_AI_ASSISTANT.md`** (in the TrussC repo). It carries a
    complete C++ API index — derived from the clang AST (so it can't drift from the
    real API) — plus an auto-generated bundled-addon list. If the symbol is in the
    index, it exists; if it isn't, it almost certainly doesn't (or lives in an
